@@ -23,12 +23,14 @@ public class Dictreenary implements DictreenaryInterface {
     
     public void addWord (String toAdd) {
         toAdd = normalizeWord(toAdd);
-        recurseAdd(toAdd,root,0);
+        root = recurseAdd(toAdd,root,0);
     }
     
     public boolean hasWord (String query) {
         query = normalizeWord(query);
-        throw new UnsupportedOperationException();
+        TTNode node = search(query,root);
+
+        return (node != null && node.wordEnd);
     }
     
     public String spellCheck (String query) {
@@ -37,12 +39,6 @@ public class Dictreenary implements DictreenaryInterface {
 
     public ArrayList<String> getSortedWords () {
         throw new UnsupportedOperationException();
-    }
-
-    public void preorderPrint (TTNode n) {
-        if (n == null) {return;}
-        System.out.println(root.mid.letter);
-
     }
 
 
@@ -69,90 +65,85 @@ public class Dictreenary implements DictreenaryInterface {
     
     // [!] Add your own helper methods here!
 
-    private TTNode searchPrefix(char searched, TTNode start) {
+    private TTNode recurseAdd (String toAdd, TTNode node, int currIndex) {
+        // Check if done
+        if (currIndex == toAdd.length() ) {
+            return node;
+        }
+
+        char currLetter = toAdd.charAt(currIndex);
+
+        // Check if char is already part of tree
+        if (currIndex + 1 == toAdd.length() && node != null && node.letter == currLetter) {
+            node.wordEnd = true;
+        }
+
+        if (node == null) {
+            node = new TTNode(currLetter, currIndex == toAdd.length() - 1);
+        }
+
+        int compare = compareChars(currLetter, node.letter);
+
+        // Same char, move on to next index
+        if (compare == 0) {
+            node.mid = recurseAdd(toAdd, node.mid, currIndex + 1);
+        }
+
+        // Not the same char, less than, move left, same index
+        if (compare < 0) {
+            node.left = recurseAdd(toAdd, node.left, currIndex);
+        }
+
+        // Not the same char, greater than, move right, same index
+        if (compare > 0) {
+            node.right = recurseAdd(toAdd, node.right, currIndex);
+        }
+
+        return node;
+    }
+
+    private TTNode recurseSearch(char searched, TTNode start) {
 
         if (start == null) {
             return null;
         }
 
-        if (start.letter == searched) {
+        int compare = compareChars(searched,start.letter);
+
+        if (compare == 0) {
             return start;
         }
 
-        if (searched < start.letter) {
-            return searchPrefix(searched, start.left);
+        if (compare < 0) {
+            return recurseSearch(searched, start.left);
         }
 
-        return searchPrefix(searched, start.right);
+        return recurseSearch(searched, start.right);
     }
 
-    private void recurseAdd (String toAdd, TTNode start, int currIndex) {
-        char currLetter = toAdd.charAt(currIndex);
+    private TTNode search(String searched, TTNode node) {
+        char currLetter;
 
-        if (root == null) {
-            root = new TTNode(toAdd.charAt(0), false);
-            if (toAdd.length() == 1) {
-                root.wordEnd = true;
-                return;
-            } else {
-                recurseAdd (toAdd, root, 1);
+        for (int i = 0; i < searched.length(); i++) {
+            if (i != 0) {
+                node = node.mid;
             }
-        }
 
-        TTNode node = searchPrefix(currLetter, start);
-
-        if (node != null) {
-            recurseAdd (toAdd, node, currIndex + 1);
-        }
-
-        if (start.mid == null) {
-            start.mid = new TTNode(currLetter, false);
-            if (currIndex == toAdd.length() - 1) {
-                start.mid.wordEnd = true;
-                return;
-            } else {
-                recurseAdd (toAdd, start.mid, currIndex + 1);
+            if (node == null) {
+                break;
             }
-        }
 
-        if (currLetter < start.mid.letter) {
-            recurseAdd (toAdd, start.left, currIndex);
-        }
+            currLetter = searched.charAt(i);
+            node = recurseSearch(currLetter, node);
 
-        if (currLetter > start.mid.letter) {
-            recurseAdd (toAdd, start.right, currIndex);
-        }
-
-
-/*        if (node != null) {
-            if (currIndex == toAdd.length() - 1) {
-                node.wordEnd = true;
-                return;
-            } else {
-                recurseAdd(toAdd, node.mid, currIndex + 1);
+            if (node == null) {
+                break;
             }
+
         }
 
-
-
-        if (start == null) {
-            start = new TTNode(currLetter, false);
-            System.out.println(start == root.mid);
-
-            if (currIndex == toAdd.length() - 1) {
-                start.wordEnd = true;
-                System.out.println("TRUE?");
-                return;
-            } else {
-                recurseAdd(toAdd, start.mid, currIndex + 1);
-            }
-        } else if (currLetter < start.letter) {
-            recurseAdd(toAdd, start.left, currIndex);
-        } else {
-            recurseAdd(toAdd, start.right, currIndex);
-        }*/
+        return node;
     }
-
 
     
     // TTNode Internal Storage
