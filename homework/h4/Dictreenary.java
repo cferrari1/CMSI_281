@@ -34,7 +34,45 @@ public class Dictreenary implements DictreenaryInterface {
     }
     
     public String spellCheck (String query) {
-        throw new UnsupportedOperationException();
+        query = normalizeWord(query);
+
+        if (hasWord(query)) {
+            return query;
+        }
+
+        int failPoint = -1;
+        int prevFailPoint;
+        String newQuery1 = null;
+        String newQuery2 = null;
+
+        while (true) {
+            prevFailPoint = failPoint;
+            failPoint = findFail(query, root);
+
+            if (failPoint != query.length() - 1) {
+                newQuery1 = preSwap(failPoint, query);
+            }
+
+            if (failPoint != 0) {
+                newQuery2 = postSwap(failPoint, query);
+            }
+
+            if (newQuery1 != null) {
+                query = newQuery1;
+            } else if (newQuery2 != null) {
+                query = newQuery2;
+            } else {
+                return null;
+            }
+
+
+
+            if (hasWord(query)) {
+                return query;
+            } else {
+                continue;
+            }
+        }
     }
 
     public ArrayList<String> getSortedWords () {
@@ -145,7 +183,57 @@ public class Dictreenary implements DictreenaryInterface {
         return node;
     }
 
-    
+    private int findFail(String searched, TTNode node) {
+        char currLetter;
+        int failPoint = -1;
+
+        for (int i = 0; i < searched.length(); i++) {
+            if (i != 0) {
+                node = node.mid;
+            }
+
+            if (node == null) {
+                break;
+            }
+
+            currLetter = searched.charAt(i);
+            node = recurseSearch(currLetter, node);
+
+            if (node == null) {
+                failPoint = i;
+                break;
+            }
+
+        }
+
+        return failPoint;
+    }
+
+    private String preSwap(int prevFailPoint, String query) {
+        if (query.length() - 1 < failPoint + 2) {
+            query = query.substring(0, failPoint) + query.charAt(failPoint + 1) + query.charAt(failPoint);
+        } else {
+            query = query.substring(0, failPoint) + query.charAt(failPoint + 1) + query.charAt(failPoint) + query.substring(failPoint + 2);
+        }
+
+
+        if (failPoint <= prevFailPoint) {
+            return null;
+        }
+        return query;
+
+    }
+
+    private String postSwap(int prevFailPoint, String query) {
+
+
+
+        if (failPoint <= prevFailPoint) {
+            return null;
+        }
+        return query;
+    }
+
     // TTNode Internal Storage
     // -----------------------------------------------------------
     
